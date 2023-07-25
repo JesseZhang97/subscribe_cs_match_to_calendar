@@ -1,0 +1,12 @@
+{
+  "type": "module",
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "cheerio": "^1.0.0-rc.12",
+    "hltv": "^3.4.6",
+    "ical-generator": "^5.0.0"
+  }
+}
