@@ -1,22 +1,34 @@
 import http from 'node:http';
 import { parse } from 'url';
 import ical from 'ical-generator';
-import { getLatestEvent, getMatches } from './fetchHLTVRawData.js';
-import { HLTV, MatchFilter } from 'hltv';
+import { HLTV } from 'hltv';
 
-// ical init
+async function fetchMatchesInfo() {
+  const eventsInfoRes = await HLTV.getEvents();
+  const featuredEvent = eventsInfoRes.find((i) => i.featured === true);
+  const id = featuredEvent.id;
+  const matchesInfoList = await HLTV.getMatches({ eventIds: id });
+  const filterNoTeam = matchesInfoList.filter(
+    (i) => i.team1 && i.team1 != undefined
+  );
+  return filterNoTeam;
+}
+
+// const matches = getMatches(eventInfo.eventId);
 const calendar = ical({ name: 'HLTV featured match clendar' });
 
-// console.log(await getLatestEvent());
-// console.log(await getMatches(6812));
+(async () => {
+  const matchList = await fetchMatchesInfo();
+  matchList.forEach((match) => {
+    calendar.createEvent({
+      start: new Date(match.date),
+      end: new Date(match.date),
+      summary: match.team1.name + ' vs ' + match.team2.name,
+      description: match.event.name,
+    });
+  });
+})();
 
-// const matchesList = await getMatches(6812);
-// console.log(matchesList);
-const res = await HLTV.getMatches({
-  eventId: 6811,
-  filter: MatchFilter.TopTier,
-});
-console.log(res);
 // ------------------------------------------------------------------
 const hostname = '127.0.0.1';
 const port = 3000;
@@ -35,7 +47,7 @@ const server = http.createServer((req, res) => {
 
     case pathname === '/ical_sub' && method === 'GET':
       res.statusCode = 200;
-      res.end();
+      calendar.serve(res);
       break;
     default:
       res.statusCode = 404;
